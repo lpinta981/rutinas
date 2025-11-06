@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Mis Rutinas</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            min-height: 100vh;
+            padding: 0;
+            overflow-x: hidden;
+            padding-bottom: 80px; /* Espacio para tab bar */
+        }
+
+        /* Login Screen - Mobile First */
+        .login-screen {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-logo h1 {
+            font-size: 32px;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .login-logo p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+            margin-top: 12px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: 2px solid #dc3545;
+            margin-top: 12px;
+        }
+
+        .btn-danger:active {
+            background: #c82333;
+            border-color: #c82333;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        /* Main App */
+        .app-container {
+            display: none;
+        }
+
+        /* Header Compacto - Mobile */
+        .app-header {
+            background: white;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .date-display {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 16px;
+        }
+
+        .tab-view {
+            display: none;
+        }
+
+        .tab-view.active {
+            display: block;
+        }
+
+        /* Activity Card - Optimizado para táctil */
+        .activity-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .activity-card:active {
+            transform: scale(0.98);
+        }
+
+        .activity-card.completed {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+        }
+
+        .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .activity-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1f2937;
+            flex: 1;
+        }
+
+        .activity-card.completed .activity-title {
+            color: #10b981;
+            text-decoration: line-through;
+        }
+
+        .activity-time {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 500;
+            background: #f0f4ff;
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+
+        .activity-meta {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-pack {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .badge-priority-alta {
+            background: #fee;
+            color: #c33;
+        }
+
+        .badge-priority-media {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-priority-baja {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .check-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .check-btn.unchecked {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .check-btn.checked {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .check-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Week Day Cards */
+        .week-grid {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .day-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .day-info h3 {
+            font-size: 16px;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .day-info p {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .day-progress {
+            text-align: right;
+        }
+
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(#667eea 0deg, #e5e7eb 0deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .progress-ring::before {
+            content: '';
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+        }
+
+        .progress-value {
+            position: relative;
+            z-index: 1;
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        /* Tab Bar - iOS Style */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 20px 0; /* Extra padding bottom para iPhone */
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #9ca3af;
+        }
+
+        .tab-item.active {
+            color: #667eea;
+        }
+
+        .tab-icon {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .tab-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Pack Selector */
+        .pack-selector {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 8px 0;
+            margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .pack-selector::-webkit-scrollbar {
+            display: none;
+        }
+
+        .pack-chip {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pack-chip.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Pull to refresh indicator */
+        .pull-indicator {
+            text-align: center;
+            padding: 12px;
+            color: #667eea;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+        }
+
+        /* Configuración Tab */
+        .settings-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .settings-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .settings-item {
+            padding: 16px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .settings-value {
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s;
+        }
+
+        .fab:active {
+            transform: scale(0.9);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #1f2937;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+        }
+
+        /* Form inputs */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .color-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+
+        /* Activity item in list */
+        .activity-item {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .activity-item h4 {
+            font-size: 16px;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .activity-item p {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .activity-item .delete-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #fee;
+            color: #c33;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .activity-item .delete-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Responsive tweaks */
+        @media (min-width: 768px) {
+            .content {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <h1>✓ Rutinas</h1>
+                <p>Gestiona tus hábitos diarios</p>
+            </div>
+            <div class="error-message" id="loginError"></div>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="tu@email.com">
+            </div>
+            <div class="input-group">
+                <label>Contraseña</label>
+                <input type="password" id="loginPassword" placeholder="••••••••">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()">Iniciar Sesión</button>
+            <button class="btn btn-secondary" onclick="showSignUp()">Crear Cuenta</button>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="header-top">
+                <div class="header-title">Rutinas</div>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <button class="logout-btn" onclick="handleLogout()">Salir</button>
+                </div>
+            </div>
+            <div class="date-display" id="dateDisplay"></div>
+        </div>
+
+        <!-- Pull to refresh -->
+        <div class="pull-indicator" id="pullIndicator">↓ Actualizar...</div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Tab: Hoy -->
+            <div class="tab-view active" id="tabHoy">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="todayCompleted">0</div>
+                        <div class="stat-label">Completadas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="todayTotal">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
+
+                <div class="pack-selector" id="packSelector"></div>
+
+                <div id="todayActivities">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando actividades...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Semana -->
+            <div class="tab-view" id="tabSemana">
+                <div class="week-grid" id="weekActivities">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando semana...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Mes -->
+            <div class="tab-view" id="tabMes">
+                <h3 style="margin-bottom: 16px; color: #1f2937;">Estadísticas del Mes</h3>
+                <div id="monthStats">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando estadísticas...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Configuración -->
+            <div class="tab-view" id="tabConfig">
+                <div class="settings-section">
+                    <h3>Mi Cuenta</h3>
+                    <div class="settings-item">
+                        <div class="settings-label" id="userEmailDisplay">Email</div>
+                        <div class="settings-value">Usuario actual</div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Mis Packs</h3>
+                    <button class="btn btn-primary" onclick="showCreatePackModal()" style="margin-bottom: 16px;">
+                        + Crear Nuevo Pack
+                    </button>
+                    <div id="packsList">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Acerca de</h3>
+                    <div class="settings-item">
+                        <div class="settings-label">Versión</div>
+                        <div class="settings-value">1.0.0 Mobile</div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-label">Última actualización</div>
+                        <div class="settings-value" id="lastSync">Ahora</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Crear Rutinas -->
+            <div class="tab-view" id="tabCrear">
+                <h3 style="margin-bottom: 16px; color: #1f2937;">Gestión de Rutinas</h3>
+                
+                <!-- Selector de Pack -->
+                <div class="settings-section">
+                    <h3>Selecciona un Pack</h3>
+                    <select id="packSelectorCrear" class="input-group input" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 15px;" onchange="loadActivitiesForPack()">
+                        <option value="">-- Selecciona un pack --</option>
+                    </select>
+                </div>
+
+                <!-- Botón Crear Actividad -->
+                <button class="btn btn-primary" onclick="showCreateActivityModal()" style="margin: 16px 0;" id="btnCreateActivity" disabled>
+                    + Crear Nueva Actividad
+                </button>
+
+                <!-- Lista de Actividades del Pack -->
+                <div class="settings-section" id="activitiesListSection" style="display: none;">
+                    <h3>Actividades del Pack</h3>
+                    <div id="activitiesList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <button class="tab-item active" data-tab="hoy" onclick="switchTab('hoy', this)">
+                <div class="tab-icon"><i class="fas fa-calendar-day"></i></div>
+                <div class="tab-label">Hoy</div>
+            </button>
+            <button class="tab-item" data-tab="semana" onclick="switchTab('semana', this)">
+                <div class="tab-icon"><i class="fas fa-chart-bar"></i></div>
+                <div class="tab-label">Semana</div>
+            </button>
+            <button class="tab-item" data-tab="mes" onclick="switchTab('mes', this)">
+                <div class="tab-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="tab-label">Mes</div>
+            </button>
+            <button class="tab-item" data-tab="crear" onclick="switchTab('crear', this)">
+                <div class="tab-icon"><i class="fas fa-plus"></i></div>
+                <div class="tab-label">Crear</div>
+            </button>
+            <button class="tab-item" data-tab="config" onclick="switchTab('config', this)">
+                <div class="tab-icon"><i class="fas fa-cog"></i></div>
+                <div class="tab-label">Config</div>
+            </button>
+        </div>
+
+        <!-- FAB -->
+        <button class="fab" onclick="refreshData()" title="Actualizar"><i class="fas fa-sync-alt"></i></button>
+    </div>
+
+    <!-- Modales -->
+    <!-- Modal: Crear Pack -->
+    <div class="modal-overlay" id="modalCreatePack">
+        <div class="modal">
+            <h2>Crear Nuevo Pack</h2>
+            <div class="form-group">
+                <label>Nombre del Pack *</label>
+                <input type="text" id="packNombre" placeholder="Ej: Rutina Matutina">
+            </div>
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea id="packDescripcion" placeholder="Descripción opcional"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="packColor" value="#667eea">
+                    <div class="color-preview" id="colorPreview" style="background: #667eea;"></div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('modalCreatePack')">Cancelar</button>
+                <button class="btn btn-primary" onclick="createPack()">Crear Pack</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear Actividad -->
+    <div class="modal-overlay" id="modalCreateActivity">
+        <div class="modal">
+            <h2>Crear Nueva Actividad</h2>
+            <div class="form-group">
+                <label>Nombre de la Actividad *</label>
+                <input type="text" id="activityNombre" placeholder="Ej: Leer 30 minutos">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Hora Inicio</label>
+                    <input type="time" id="activityHoraInicio">
+                </div>
+                <div class="form-group">
+                    <label>Duración (min)</label>
+                    <input type="number" id="activityDuracion" placeholder="30">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Categoría</label>
+                <input type="text" id="activityCategoria" placeholder="Ej: Salud, Trabajo">
+            </div>
+            <div class="form-group">
+                <label>Prioridad</label>
+                <select id="activityPrioridad">
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                    <option value="baja">Baja</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Frecuencia *</label>
+                <select id="activityFrecuencia" onchange="updateFrecuenciaFields()">
+                    <option value="diario">Diario</option>
+                    <option value="dias_semana">Días específicos de la semana</option>
+                    <option value="cada_n_dias">Cada N días</option>
+                </select>
+            </div>
+            <div class="form-group" id="fieldDiasSemana" style="display: none;">
+                <label>Días de la Semana</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" value="lun"> Lun
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" value="mar"> Mar
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" value="mie"> Mié
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" value="jue"> Jue
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" value="vie"> Vie
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" value="sab"> Sáb
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" value="dom"> Dom
+                    </label>
+                </div>
+            </div>
+            <div class="form-group" id="fieldCadaNDias" style="display: none;">
+                <label>Repetir cada N días</label>
+                <input type="number" id="activityCadaNDias" placeholder="2" min="1">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('modalCreateActivity')">Cancelar</button>
+                <button class="btn btn-primary" onclick="createActivity()">Crear Actividad</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmar Eliminación -->
+    <div class="modal-overlay" id="modalConfirmDelete">
+        <div class="modal">
+            <h2>Confirmar Eliminación</h2>
+            <p>¿Estás seguro de que quieres eliminar esta actividad? Esta acción no se puede deshacer.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal('modalConfirmDelete')">Cancelar</button>
+                <button class="btn btn-danger" onclick="confirmDeleteActivity()">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // =====================================================
+        // CONFIGURACIÓN SUPABASE (Patrón GUIA)
+        // =====================================================
+        const SUPABASE_URL = 'https://lpsupabase.manasakilla.com';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.ElbNIiT2JsqJkVxUx4bRasL7GpN-Y1A1-5h09fsgpW8';
+        
+        let supabaseClient = null;
+        
+        // Inicializar Supabase
+        function initSupabase() {
+            if (supabaseClient) {
+                return supabaseClient;
+            }
+            
+            if (typeof window.supabase !== 'undefined') {
+                const { createClient } = window.supabase;
+                supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase inicializado');
+                return supabaseClient;
+            } else {
+                console.error('❌ Error: Librería de Supabase no disponible');
+                return null;
+            }
+        }
+        
+        // Obtener cliente (lazy loading)
+        function getSupabaseClient() {
+            if (!supabaseClient) {
+                initSupabase();
+            }
+            return supabaseClient;
+        }
+        
+        // Inicializar al cargar
+        initSupabase();
+        
+        // =====================================================
+        // ESTADO DE LA APLICACIÓN
+        // =====================================================
+        let currentUser = null;
+        let selectedPackId = null;
+        let allActivities = [];
+        let allPacks = [];
+
+        // ============================================
+        // AUTH FUNCTIONS (Patrón GUIA - Probado y Funcional)
+        // ============================================
+        
+        /**
+         * Inicializar autenticación al cargar la página
+         */
+        async function initAuth() {
+            const client = getSupabaseClient();
+            if (!client) {
+                console.error('No se pudo inicializar Supabase');
+                showLogin();
+                return;
+            }
+
+            try {
+                // Verificar sesión actual
+                const { data: { session } } = await client.auth.getSession();
+                
+                if (session) {
+                    console.log('✅ Sesión encontrada:', session.user.email);
+                    currentUser = session.user;
+                    showApp();
+                } else {
+                    console.log('⚠️ No hay sesión activa');
+                    showLogin();
+                }
+            } catch (error) {
+                console.error('Error en initAuth:', error);
+                showLogin();
+            }
+        }
+        
+        /**
+         * Login de usuario
+         */
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                showError('Por favor completa todos los campos');
+                return;
+            }
+
+            const client = getSupabaseClient();
+            try {
+                const { data, error } = await client.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                console.log('✅ Login exitoso:', data.user.email);
+                currentUser = data.user;
+                showApp();
+
+            } catch (error) {
+                console.error('❌ Error en login:', error);
+                showError(error.message || 'Error al iniciar sesión');
+            }
+        }
+        
+        /**
+         * Registro de nuevo usuario
+         */
+        async function showSignUp() {
+            const email = prompt('Ingresa tu email:');
+            if (!email) return;
+            
+            const password = prompt('Ingresa tu contraseña (mínimo 6 caracteres):');
+            if (!password || password.length < 6) {
+                alert('La contraseña debe tener al menos 6 caracteres');
+                return;
+            }
+
+            const client = getSupabaseClient();
+            try {
+                const { data, error } = await client.auth.signUp({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                if (data.user) {
+                    alert('✓ Cuenta creada! Ya puedes iniciar sesión.');
+                    document.getElementById('loginEmail').value = email;
+                }
+            } catch (error) {
+                console.error('❌ Error en registro:', error);
+                showError(error.message || 'Error al crear cuenta');
+            }
+        }
+        
+        /**
+         * Cerrar sesión
+         */
+        async function handleLogout() {
+            const client = getSupabaseClient();
+            try {
+                const { error } = await client.auth.signOut();
+                if (error) throw error;
+
+                currentUser = null;
+                selectedPackId = null;
+                allActivities = [];
+                allPacks = [];
+                
+                showLogin();
+                console.log('✅ Sesión cerrada');
+
+            } catch (error) {
+                console.error('❌ Error en logout:', error);
+                alert('Error al cerrar sesión: ' + error.message);
+            }
+        }
+        
+        /**
+         * Obtener fecha actual en zona horaria Ecuador (UTC-5)
+         */
+        function getTodayEcuador() {
+            const now = new Date();
+            const ecuadorTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Guayaquil' }));
+            return ecuadorTime.toISOString().split('T')[0];
+        }
+        
+        /**
+         * Obtener timestamp actual en zona horaria Ecuador
+         */
+        function getNowEcuador() {
+            const now = new Date();
+            return new Date(now.toLocaleString('en-US', { timeZone: 'America/Guayaquil' })).toISOString();
+        }
+        
+        /**
+         * Mostrar pantalla de login
+         */
+        function showLogin() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        /**
+         * Mostrar aplicación principal
+         */
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            
+            // Set user info
+            const avatar = document.getElementById('userAvatar');
+            avatar.textContent = currentUser.email.charAt(0).toUpperCase();
+            document.getElementById('userEmailDisplay').textContent = currentUser.email;
+            
+            updateDateDisplay();
+            loadAllData();
+        }
+        
+        /**
+         * Mostrar mensajes de error
+         */
+        function showError(message) {
+            const errorDiv = document.getElementById('loginError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // ============================================
+        // DATA FUNCTIONS
+        // ============================================
+        
+        async function loadAllData() {
+            await loadPacks();
+            await loadTodayActivities();
+            await loadWeekData();
+            await loadMonthStats();
+            updateLastSync();
+        }
+
+        async function loadPacks() {
+            const client = getSupabaseClient();
+            try {
+                // Verificar que hay sesión activa
+                const { data: { session } } = await client.auth.getSession();
+                if (!session) {
+                    console.error('⚠️ No hay sesión activa en loadPacks');
+                    showToast('Sesión expirada. Por favor inicia sesión nuevamente.');
+                    handleLogout();
+                    return;
+                }
+
+                console.log('📦 Cargando packs para:', session.user.email);
+
+                const { data, error } = await client
+                    .from('routines_packs_rutinas')
+                    .select('*')
+                    .eq('activo', true)
+                    .order('nombre');
+
+                if (error) throw error;
+
+                console.log('✅ Packs cargados:', data?.length || 0);
+                allPacks = data || [];
+                renderPackSelector();
+                renderPacksList();
+            } catch (error) {
+                console.error('❌ Error loading packs:', error);
+                showToast('Error al cargar packs: ' + error.message);
+            }
+        }
+
+        /**
+         * Verificar si aún se pueden ver/editar actividades de hoy
+         * Solo hasta las 23:30 hora Ecuador
+         */
+        function canViewTodayActivities() {
+            const now = new Date();
+            const ecuadorTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Guayaquil' }));
+            const hours = ecuadorTime.getHours();
+            const minutes = ecuadorTime.getMinutes();
+            
+            // Permitir hasta las 23:30
+            if (hours === 23 && minutes >= 30) {
+                return false;
+            }
+            if (hours >= 24 || hours < 0) {
+                return false;
+            }
+            
+            return true;
+        }
+
+        async function loadTodayActivities() {
+            const client = getSupabaseClient();
+            try {
+                // Verificar si aún se pueden ver actividades de hoy
+                if (!canViewTodayActivities()) {
+                    console.log('⏰ Hora límite superada (23:30). Actividades de hoy ocultas.');
+                    allActivities = [];
+                    renderTodayActivities();
+                    updateTodayStats();
+                    return;
+                }
+                
+                const today = getTodayEcuador();
+                
+                // SOLO cargar actividades de HOY (no de días anteriores)
+                let query = client
+                    .from('routines_actividades_diarias')
+                    .select(`
+                        *,
+                        routines_packs_rutinas (nombre, color)
+                    `)
+                    .eq('fecha', today) // Solo del día actual
+                    .order('hora_inicio', { nullsFirst: false });
+
+                if (selectedPackId) {
+                    query = query.eq('pack_id', selectedPackId);
+                }
+
+                const { data, error } = await query;
+
+                if (error) throw error;
+
+                console.log('✅ Actividades del día cargadas:', data?.length || 0);
+                allActivities = data || [];
+                renderTodayActivities();
+                updateTodayStats();
+            } catch (error) {
+                console.error('Error loading activities:', error);
+                showToast('Error al cargar actividades');
+            }
+        }
+
+        async function loadWeekData() {
+            const client = getSupabaseClient();
+            try {
+                const todayStr = getTodayEcuador();
+                const today = new Date(todayStr + 'T12:00:00');
+                const dayOfWeek = today.getDay();
+                const monday = new Date(today);
+                monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+                
+                const weekDays = [];
+                for (let i = 0; i < 7; i++) {
+                    const day = new Date(monday);
+                    day.setDate(monday.getDate() + i);
+                    weekDays.push(day.toISOString().split('T')[0]);
+                }
+
+                const { data, error } = await client
+                    .from('routines_actividades_diarias')
+                    .select('fecha, cumplido')
+                    .in('fecha', weekDays);
+
+                if (error) throw error;
+
+                console.log('✅ Datos de la semana cargados');
+                renderWeekData(weekDays, data || []);
+            } catch (error) {
+                console.error('❌ Error loading week data:', error);
+            }
+        }
+
+        async function loadMonthStats() {
+            const client = getSupabaseClient();
+            try {
+                const todayStr = getTodayEcuador();
+                const today = new Date(todayStr + 'T12:00:00');
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+                const { data, error } = await client
+                    .from('routines_actividades_diarias')
+                    .select('fecha, cumplido, pack_id, routines_packs_rutinas(nombre, color)')
+                    .gte('fecha', firstDay.toISOString().split('T')[0])
+                    .lte('fecha', lastDay.toISOString().split('T')[0]);
+
+                if (error) throw error;
+
+                console.log('✅ Estadísticas del mes cargadas');
+                renderMonthStats(data || []);
+            } catch (error) {
+                console.error('❌ Error loading month stats:', error);
+            }
+        }
+
+        async function toggleActivity(activityId, currentState) {
+            const client = getSupabaseClient();
+            try {
+                // Verificar si aún se pueden modificar actividades
+                if (!canViewTodayActivities()) {
+                    showToast('No se pueden modificar actividades después de las 23:30');
+                    return;
+                }
+                
+                const { error } = await client
+                    .from('routines_actividades_diarias')
+                    .update({
+                        cumplido: !currentState,
+                        hora_completado: !currentState ? getNowEcuador() : null
+                    })
+                    .eq('id', activityId);
+
+                if (error) throw error;
+
+                showToast(!currentState ? '¡Completada! 🎉' : 'Marcada como pendiente');
+                await loadTodayActivities();
+                await loadWeekData();
+            } catch (error) {
+                console.error('Error toggling activity:', error);
+                showToast('Error al actualizar');
+            }
+        }
+
+        // ============================================
+        // RENDER FUNCTIONS
+        // ============================================
+        
+        function renderPackSelector() {
+            const container = document.getElementById('packSelector');
+            
+            if (allPacks.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `<div class="pack-chip ${!selectedPackId ? 'active' : ''}" onclick="selectPack(null)">Todos</div>`;
+            
+            allPacks.forEach(pack => {
+                html += `
+                    <div class="pack-chip ${selectedPackId === pack.id ? 'active' : ''}" 
+                         onclick="selectPack(${pack.id})"
+                         style="${selectedPackId === pack.id ? `background: ${pack.color}; border-color: ${pack.color};` : ''}">
+                        ${pack.nombre}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderTodayActivities() {
+            const container = document.getElementById('todayActivities');
+            
+            // Verificar si pasó la hora límite
+            if (!canViewTodayActivities()) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-clock"></i></div>
+                        <div class="empty-title">Día Finalizado</div>
+                        <div class="empty-text">Las actividades de hoy ya no están disponibles después de las 23:30.</div>
+                        <div class="empty-text" style="margin-top: 10px; font-size: 14px; color: #666;">
+                            Puedes consultar tus estadísticas en las pestañas Semana y Mes.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (allActivities.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-clipboard-list"></i></div>
+                        <div class="empty-title">Sin actividades</div>
+                        <div class="empty-text">No hay actividades programadas para hoy</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            allActivities.forEach(activity => {
+                const pack = activity.routines_packs_rutinas;
+                html += `
+                    <div class="activity-card ${activity.cumplido ? 'completed' : ''}">
+                        <div class="activity-header">
+                            <div class="activity-title">${activity.actividad}</div>
+                            ${activity.hora_inicio ? `<div class="activity-time">${activity.hora_inicio.substring(0, 5)}</div>` : ''}
+                        </div>
+                        <div class="activity-meta">
+                            <span class="badge badge-pack" style="background: ${pack.color}20; color: ${pack.color};">
+                                ${pack.nombre}
+                            </span>
+                            ${activity.prioridad ? `<span class="badge badge-priority-${activity.prioridad}">${activity.prioridad.toUpperCase()}</span>` : ''}
+                            ${activity.categoria ? `<span class="badge badge-pack">${activity.categoria}</span>` : ''}
+                        </div>
+                        <button class="check-btn ${activity.cumplido ? 'checked' : 'unchecked'}" 
+                                onclick="toggleActivity(${activity.id}, ${activity.cumplido})">
+                            ${activity.cumplido ? '✓ Completada' : 'Marcar como completada'}
+                        </button>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderWeekData(weekDays, activities) {
+            const container = document.getElementById('weekActivities');
+            const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            
+            let html = '';
+            weekDays.forEach(dateStr => {
+                const date = new Date(dateStr + 'T12:00:00');
+                const dayActivities = activities.filter(a => a.fecha === dateStr);
+                const completed = dayActivities.filter(a => a.cumplido).length;
+                const total = dayActivities.length;
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+
+                html += `
+                    <div class="day-card" style="${isToday ? 'border-left: 4px solid #667eea;' : ''}">
+                        <div class="day-info">
+                            <h3>${dayNames[date.getDay()]} ${date.getDate()}</h3>
+                            <p>${completed} de ${total} completadas</p>
+                        </div>
+                        <div class="day-progress">
+                            <div class="progress-ring" style="background: conic-gradient(#667eea ${percentage * 3.6}deg, #e5e7eb ${percentage * 3.6}deg);">
+                                <div class="progress-value">${percentage}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderMonthStats(activities) {
+            const container = document.getElementById('monthStats');
+            
+            const packStats = {};
+            activities.forEach(activity => {
+                const packId = activity.pack_id;
+                if (!packStats[packId]) {
+                    packStats[packId] = {
+                        name: activity.routines_packs_rutinas.nombre,
+                        color: activity.routines_packs_rutinas.color,
+                        total: 0,
+                        completed: 0
+                    };
+                }
+                packStats[packId].total++;
+                if (activity.cumplido) packStats[packId].completed++;
+            });
+
+            let html = '';
+            Object.values(packStats).forEach(pack => {
+                const percentage = Math.round((pack.completed / pack.total) * 100);
+                html += `
+                    <div class="activity-card">
+                        <div class="activity-header">
+                            <div class="activity-title">${pack.name}</div>
+                            <div class="activity-time">${percentage}%</div>
+                        </div>
+                        <div style="background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 12px;">
+                            <div style="background: ${pack.color}; height: 100%; width: ${percentage}%; transition: width 0.3s;"></div>
+                        </div>
+                        <p style="font-size: 13px; color: #666;">${pack.completed} de ${pack.total} actividades completadas</p>
+                    </div>
+                `;
+            });
+
+            if (Object.keys(packStats).length === 0) {
+                html = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-chart-bar"></i></div>
+                        <div class="empty-title">Sin datos</div>
+                        <div class="empty-text">No hay actividades este mes</div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderPacksList() {
+            const container = document.getElementById('packsList');
+            
+            if (allPacks.length === 0) {
+                container.innerHTML = '<p style="color: #666; font-size: 14px;">No hay packs configurados</p>';
+                return;
+            }
+
+            let html = '';
+            allPacks.forEach(pack => {
+                html += `
+                    <div class="settings-item">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 12px; height: 12px; border-radius: 50%; background: ${pack.color};"></div>
+                            <div>
+                                <div class="settings-label">${pack.nombre}</div>
+                                ${pack.descripcion ? `<div class="settings-value">${pack.descripcion}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateTodayStats() {
+            const completed = allActivities.filter(a => a.cumplido).length;
+            const total = allActivities.length;
+
+            document.getElementById('todayCompleted').textContent = completed;
+            document.getElementById('todayTotal').textContent = total;
+        }
+
+        // ============================================
+        // UI FUNCTIONS
+        // ============================================
+        // GESTIÓN DE PACKS Y ACTIVIDADES
+        // ============================================
+        
+        let selectedPackForCreate = null;
+        let activitiesForPack = [];
+
+        // Modales - Funciones globales
+        window.showCreatePackModal = function() {
+            console.log('🔵 Abriendo modal de crear pack...');
+            const modal = document.getElementById('modalCreatePack');
+            if (!modal) {
+                console.error('❌ Modal no encontrado!');
+                return;
+            }
+            modal.classList.add('show');
+            console.log('✅ Modal mostrado');
+            
+            // Color preview update
+            const colorInput = document.getElementById('packColor');
+            const colorPreview = document.getElementById('colorPreview');
+            
+            if (colorInput && colorPreview) {
+                colorInput.addEventListener('input', (e) => {
+                    colorPreview.style.background = e.target.value;
+                });
+            }
+        };
+
+        window.showCreateActivityModal = function() {
+            console.log('🔵 Abriendo modal de crear actividad...');
+            if (!selectedPackForCreate) {
+                showToast('Selecciona un pack primero');
+                return;
+            }
+            const modal = document.getElementById('modalCreateActivity');
+            if (!modal) {
+                console.error('❌ Modal no encontrado!');
+                return;
+            }
+            modal.classList.add('show');
+            console.log('✅ Modal mostrado');
+        };
+
+        window.closeModal = function(modalId) {
+            console.log('🔴 Cerrando modal:', modalId);
+            document.getElementById(modalId).classList.remove('show');
+            // Reset forms
+            if (modalId === 'modalCreatePack') {
+                document.getElementById('packNombre').value = '';
+                document.getElementById('packDescripcion').value = '';
+                document.getElementById('packColor').value = '#667eea';
+            } else if (modalId === 'modalCreateActivity') {
+                document.getElementById('activityNombre').value = '';
+                document.getElementById('activityHoraInicio').value = '';
+                document.getElementById('activityDuracion').value = '';
+                document.getElementById('activityCategoria').value = '';
+                document.getElementById('activityPrioridad').value = 'media';
+                document.getElementById('activityFrecuencia').value = 'diario';
+                window.updateFrecuenciaFields();
+            }
+        };
+
+        window.updateFrecuenciaFields = function() {
+            const frecuencia = document.getElementById('activityFrecuencia').value;
+            document.getElementById('fieldDiasSemana').style.display = frecuencia === 'dias_semana' ? 'block' : 'none';
+            document.getElementById('fieldCadaNDias').style.display = frecuencia === 'cada_n_dias' ? 'block' : 'none';
+        };
+
+        // Helper: Obtener email del usuario autenticado
+        // SIEMPRE obtiene el email de la sesión actual de Supabase
+        async function getUserEmail() {
+            const client = getSupabaseClient();
+            
+            try {
+                // Obtener sesión activa de Supabase
+                const { data: { session }, error } = await client.auth.getSession();
+                
+                if (error) {
+                    console.error('❌ Error obteniendo sesión:', error);
+                    return null;
+                }
+                
+                if (!session || !session.user) {
+                    console.error('❌ No hay sesión activa');
+                    return null;
+                }
+                
+                // Sincronizar currentUser
+                currentUser = session.user;
+                
+                // El email del JWT es la fuente de verdad
+                const email = session.user.email;
+                console.log('📧 Email del usuario autenticado:', email);
+                
+                return email;
+                
+            } catch (error) {
+                console.error('❌ Error en getUserEmail:', error);
+                return null;
+            }
+        }
+
+        // Crear Pack
+        window.createPack = async function() {
+            const nombre = document.getElementById('packNombre').value.trim();
+            const descripcion = document.getElementById('packDescripcion').value.trim();
+            const color = document.getElementById('packColor').value;
+
+            if (!nombre) {
+                showToast('El nombre del pack es requerido');
+                return;
+            }
+
+            // Obtener email del usuario autenticado
+            const userEmail = await getUserEmail();
+            if (!userEmail) {
+                showToast('Error: No hay usuario autenticado. Por favor inicia sesión nuevamente.');
+                console.error('❌ No se pudo obtener email del usuario');
+                handleLogout();
+                return;
+            }
+
+            const client = getSupabaseClient();
+            try {
+                console.log('📦 Creando pack para:', userEmail);
+                console.log('📦 Datos:', { nombre, descripcion, color });
+
+                const { data, error } = await client
+                    .from('routines_packs_rutinas')
+                    .insert([{
+                        user_email: userEmail,
+                        nombre: nombre,
+                        descripcion: descripcion || null,
+                        color: color,
+                        activo: true
+                    }])
+                    .select();
+
+                if (error) {
+                    console.error('❌ Error de Supabase:', error);
+                    throw error;
+                }
+
+                console.log('✅ Pack creado:', data);
+                showToast('✓ Pack creado exitosamente!');
+                window.closeModal('modalCreatePack');
+                await loadPacks();
+                window.loadPacksForCrear();
+            } catch (error) {
+                console.error('❌ Error creando pack:', error);
+                showToast('Error al crear pack: ' + (error.message || error.hint || 'Error desconocido'));
+            }
+        };
+
+        // Crear Actividad
+        window.createActivity = async function() {
+            const nombre = document.getElementById('activityNombre').value.trim();
+            const horaInicio = document.getElementById('activityHoraInicio').value;
+            const duracion = document.getElementById('activityDuracion').value;
+            const categoria = document.getElementById('activityCategoria').value.trim();
+            const prioridad = document.getElementById('activityPrioridad').value;
+            const frecuenciaTipo = document.getElementById('activityFrecuencia').value;
+
+            if (!nombre) {
+                showToast('El nombre de la actividad es requerido');
+                return;
+            }
+
+            // Obtener email del usuario autenticado
+            const userEmail = await getUserEmail();
+            if (!userEmail) {
+                showToast('Error: No hay usuario autenticado. Por favor inicia sesión nuevamente.');
+                console.error('❌ No se pudo obtener email del usuario');
+                handleLogout();
+                return;
+            }
+
+            if (!selectedPackForCreate) {
+                showToast('Error: No se ha seleccionado un pack');
+                return;
+            }
+
+            let diasSemana = null;
+            let cadaNDias = null;
+
+            if (frecuenciaTipo === 'dias_semana') {
+                const checkboxes = document.querySelectorAll('#fieldDiasSemana input[type="checkbox"]:checked');
+                diasSemana = Array.from(checkboxes).map(cb => cb.value);
+                if (diasSemana.length === 0) {
+                    showToast('Selecciona al menos un día de la semana');
+                    return;
+                }
+            } else if (frecuenciaTipo === 'cada_n_dias') {
+                cadaNDias = parseInt(document.getElementById('activityCadaNDias').value);
+                if (!cadaNDias || cadaNDias < 1) {
+                    showToast('Ingresa un número válido de días');
+                    return;
+                }
+            }
+
+            const client = getSupabaseClient();
+            try {
+                console.log('📝 Creando actividad para:', userEmail);
+                console.log('📝 Pack ID:', selectedPackForCreate);
+                console.log('📝 Datos:', { nombre, horaInicio, duracion, categoria, prioridad, frecuenciaTipo });
+
+                const { data, error } = await client
+                    .from('routines_configuracion_actividades')
+                    .insert([{
+                        user_email: userEmail,
+                        pack_id: selectedPackForCreate,
+                        actividad: nombre,
+                        hora_inicio: horaInicio || null,
+                        duracion: duracion ? parseInt(duracion) : null,
+                        categoria: categoria || null,
+                        prioridad: prioridad,
+                        frecuencia_tipo: frecuenciaTipo,
+                        dias_semana: diasSemana ? JSON.stringify(diasSemana) : null,
+                        cada_n_dias: cadaNDias,
+                        fecha_inicio_ciclo: frecuenciaTipo === 'cada_n_dias' ? new Date().toISOString().split('T')[0] : null,
+                        activo: true
+                    }])
+                    .select();
+
+                if (error) {
+                    console.error('❌ Error de Supabase:', error);
+                    throw error;
+                }
+
+                console.log('✅ Actividad creada:', data);
+                showToast('✓ Actividad creada exitosamente!');
+                window.closeModal('modalCreateActivity');
+                await window.loadActivitiesForPack();
+            } catch (error) {
+                console.error('❌ Error creando actividad:', error);
+                showToast('Error al crear actividad: ' + (error.message || error.hint || 'Error desconocido'));
+            }
+        };
+
+        // Cargar packs en el selector del tab Crear
+        window.loadPacksForCrear = async function() {
+            const select = document.getElementById('packSelectorCrear');
+            select.innerHTML = '<option value="">-- Selecciona un pack --</option>';
+            
+            allPacks.forEach(pack => {
+                const option = document.createElement('option');
+                option.value = pack.id;
+                option.textContent = pack.nombre;
+                select.appendChild(option);
+            });
+        };
+
+        // Cargar actividades del pack seleccionado
+        window.loadActivitiesForPack = async function() {
+            const packId = parseInt(document.getElementById('packSelectorCrear').value);
+            
+            if (!packId) {
+                document.getElementById('btnCreateActivity').disabled = true;
+                document.getElementById('activitiesListSection').style.display = 'none';
+                selectedPackForCreate = null;
+                return;
+            }
+
+            selectedPackForCreate = packId;
+            document.getElementById('btnCreateActivity').disabled = false;
+
+            const client = getSupabaseClient();
+            try {
+                const { data, error } = await client
+                    .from('routines_configuracion_actividades')
+                    .select('*')
+                    .eq('pack_id', packId)
+                    .eq('activo', true)
+                    .order('orden', { ascending: true });
+
+                if (error) throw error;
+
+                activitiesForPack = data || [];
+                renderActivitiesList();
+            } catch (error) {
+                console.error('Error loading activities:', error);
+                showToast('Error al cargar actividades');
+            }
+        };
+
+        // Renderizar lista de actividades
+        function renderActivitiesList() {
+            const container = document.getElementById('activitiesList');
+            const section = document.getElementById('activitiesListSection');
+
+            if (activitiesForPack.length === 0) {
+                section.style.display = 'block';
+                container.innerHTML = '<p style="color: #666; font-size: 14px;">No hay actividades en este pack. ¡Crea la primera!</p>';
+                return;
+            }
+
+            section.style.display = 'block';
+            let html = '';
+            
+            activitiesForPack.forEach(activity => {
+                let frecuenciaText = '';
+                if (activity.frecuencia_tipo === 'diario') {
+                    frecuenciaText = 'Todos los días';
+                } else if (activity.frecuencia_tipo === 'dias_semana') {
+                    const dias = JSON.parse(activity.dias_semana || '[]');
+                    frecuenciaText = dias.join(', ');
+                } else if (activity.frecuencia_tipo === 'cada_n_dias') {
+                    frecuenciaText = `Cada ${activity.cada_n_dias} días`;
+                }
+
+                html += `
+                    <div class="activity-item">
+                        <button class="delete-btn" onclick="showDeleteConfirm(${activity.id})">Eliminar</button>
+                        <h4>${activity.actividad}</h4>
+                        ${activity.hora_inicio ? `<p><i class="fas fa-clock"></i> ${activity.hora_inicio.substring(0, 5)}</p>` : ''}
+                        ${activity.duracion ? `<p><i class="fas fa-stopwatch"></i> ${activity.duracion} minutos</p>` : ''}
+                        <p><i class="fas fa-calendar-day"></i> ${frecuenciaText}</p>
+                        ${activity.categoria ? `<p><i class="fas fa-tag"></i> ${activity.categoria}</p>` : ''}
+                        <p><i class="fas fa-star"></i> Prioridad: ${activity.prioridad}</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Variables para confirmación de eliminación
+        let activityToDelete = null;
+
+        // Mostrar confirmación de eliminación
+        function showDeleteConfirm(activityId) {
+            activityToDelete = activityId;
+            const modal = document.getElementById('modalConfirmDelete');
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        // Confirmar eliminación
+        async function confirmDeleteActivity() {
+            if (activityToDelete) {
+                await window.deleteActivity(activityToDelete);
+                activityToDelete = null;
+                window.closeModal('modalConfirmDelete');
+            }
+        }
+
+        // Eliminar actividad
+        window.deleteActivity = async function(activityId) {
+            const client = getSupabaseClient();
+            try {
+                const { error } = await client
+                    .from('routines_configuracion_actividades')
+                    .update({ activo: false })
+                    .eq('id', activityId);
+
+                if (error) throw error;
+
+                showToast('✓ Actividad eliminada');
+                await window.loadActivitiesForPack();
+            } catch (error) {
+                console.error('Error deleting activity:', error);
+                showToast('Error al eliminar actividad');
+            }
+        };
+
+        // ============================================
+        // UI FUNCTIONS
+        // ============================================
+        
+        function switchTab(tabName, trigger) {
+            document.querySelectorAll('.tab-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            if (trigger && trigger.classList) {
+                trigger.classList.add('active');
+            } else {
+                const fallbackButton = document.querySelector(`.tab-item[data-tab="${tabName}"]`);
+                if (fallbackButton) {
+                    fallbackButton.classList.add('active');
+                }
+            }
+
+            document.querySelectorAll('.tab-view').forEach(view => {
+                view.classList.remove('active');
+            });
+
+            const targetView = document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+            if (targetView) {
+                targetView.classList.add('active');
+            }
+
+            if (tabName === 'semana') loadWeekData();
+            if (tabName === 'mes') loadMonthStats();
+            if (tabName === 'crear') window.loadPacksForCrear();
+        }
+
+        function selectPack(packId) {
+            selectedPackId = packId;
+            renderPackSelector();
+            loadTodayActivities();
+        }
+
+        async function refreshData() {
+            showToast('Actualizando...');
+            await loadAllData();
+            showToast('¡Actualizado! ✓');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        function updateDateDisplay() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('dateDisplay').textContent = now.toLocaleDateString('es-ES', options);
+        }
+
+        function updateLastSync() {
+            const now = new Date();
+            document.getElementById('lastSync').textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // ============================================
+        // INIT (Patrón GUIA)
+        // ============================================
+        
+        // Escuchar cambios de autenticación (configurar ANTES de init)
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Iniciando aplicación...');
+            
+            // Configurar listener de auth
+            const client = getSupabaseClient();
+            if (client) {
+                client.auth.onAuthStateChange((event, session) => {
+                    console.log('🔐 Auth event:', event);
+                    if (event === 'SIGNED_IN' && session) {
+                        currentUser = session.user;
+                        showApp();
+                    } else if (event === 'SIGNED_OUT') {
+                        currentUser = null;
+                        showLogin();
+                    }
+                });
+            }
+            
+            // Iniciar autenticación
+            await initAuth();
+        });
+
+        // Pull to refresh (basic implementation)
+        let touchStartY = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            const touchY = e.touches[0].clientY;
+            const touchDiff = touchY - touchStartY;
+            
+            if (touchDiff > 100 && window.scrollY === 0) {
+                document.getElementById('pullIndicator').style.display = 'block';
+            }
+        });
+
+        document.addEventListener('touchend', async (e) => {
+            const indicator = document.getElementById('pullIndicator');
+            if (indicator.style.display === 'block') {
+                indicator.textContent = '↻ Actualizando...';
+                await refreshData();
+                indicator.style.display = 'none';
+                indicator.textContent = '↓ Actualizar...';
+            }
+        });
+    </script>
+</body>
+</html>
